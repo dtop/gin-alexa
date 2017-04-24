@@ -15,6 +15,12 @@ Example:
 
 ```go
 
+func YourOnIntentFunc(c *gin.Context, req *AlexaRequest, res *AlexaResponse) {
+
+    // ... handle OnIntent
+    // ... respond
+}
+
 func Routes(r *gin.Engine) {
 
     app1 := &AlexaApplication{
