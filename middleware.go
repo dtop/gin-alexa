@@ -17,33 +17,32 @@ import (
     "crypto/x509"
     "time"
     "errors"
-    "log"
+    "fmt"
 )
 
 func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
 
     return func (c *gin.Context) {
 
-
         if err := verifyJSON(c, app.AppID); err != nil {
 
-            msg := err.Error()
-            code := err.(HttpError).Code()
-            expl := err.(HttpError).Explination()
+            //msg := err.Error()
+            code := err.(*HttpError).Code()
+            expl := err.(*HttpError).Explination()
 
-            c.AbortWithError(code, msg);
-            log.Println(expl)
+            c.AbortWithError(code, err);
+            fmt.Println(expl)
             return
         }
 
         if err := validateRequest(c); err != nil {
 
-            msg := err.Error()
-            code := err.(HttpError).Code()
-            expl := err.(HttpError).Explination()
+            //msg := err.Error()
+            code := err.(*HttpError).Code()
+            expl := err.(*HttpError).Explination()
 
-            c.AbortWithError(code, msg);
-            log.Println(expl)
+            c.AbortWithError(code, err);
+            fmt.Println(expl)
             return
         }
 
@@ -75,36 +74,38 @@ func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
             return
         }
 
-        c.AbortWithStatus(500)
+        c.Next()
     }
 }
 
 func AlexaMiddleware(AppID string) gin.HandlerFunc {
 
-    return func (c *gin.Context) {
 
+    return func (c *gin.Context) {
 
         if err := verifyJSON(c, AppID); err != nil {
 
-            msg := err.Error()
-            code := err.(HttpError).Code()
-            expl := err.(HttpError).Explination()
+            //msg := err.Error()
+            code := err.(*HttpError).Code()
+            expl := err.(*HttpError).Explination()
 
-            c.AbortWithError(code, msg);
-            log.Println(expl)
+            c.AbortWithError(code, err);
+            fmt.Println(expl)
             return
         }
 
         if err := validateRequest(c); err != nil {
 
-            msg := err.Error()
-            code := err.(HttpError).Code()
-            expl := err.(HttpError).Explination()
+            //msg := err.Error()
+            code := err.(*HttpError).Code()
+            expl := err.(*HttpError).Explination()
 
-            c.AbortWithError(code, msg);
-            log.Println(expl)
+            c.AbortWithError(code, err);
+            fmt.Println(expl)
             return
         }
+
+        c.Next()
     }
 }
 
