@@ -17,7 +17,7 @@ import (
     "crypto/x509"
     "time"
     "errors"
-    "fmt"
+    "log"
 )
 
 func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
@@ -31,7 +31,7 @@ func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
             expl := err.(*HttpError).Explination()
 
             c.AbortWithError(code, err);
-            fmt.Println(expl)
+            log.Println(expl)
             return
         }
 
@@ -42,7 +42,7 @@ func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
             expl := err.(*HttpError).Explination()
 
             c.AbortWithError(code, err);
-            fmt.Println(expl)
+            log.Println(expl)
             return
         }
 
@@ -51,6 +51,14 @@ func AlexaMiddlewareAutomatic(app *AlexaApplication) gin.HandlerFunc {
         if ok {
             echoReq  := req.(*AlexaRequest)
             echoResp := NewAlexaResponse()
+
+            if app.OnAuthCheck != nil {
+                if err := app.OnAuthCheck(c, echoReq, echoResp); err != nil {
+                    c.AbortWithStatus(403)
+                    return
+                }
+            }
+
             switch echoReq.GetRequestType() {
 
             case "LaunchRequest":
@@ -90,7 +98,7 @@ func AlexaMiddleware(AppID string) gin.HandlerFunc {
             expl := err.(*HttpError).Explination()
 
             c.AbortWithError(code, err);
-            fmt.Println(expl)
+            log.Println(expl)
             return
         }
 
@@ -101,7 +109,7 @@ func AlexaMiddleware(AppID string) gin.HandlerFunc {
             expl := err.(*HttpError).Explination()
 
             c.AbortWithError(code, err);
-            fmt.Println(expl)
+            log.Println(expl)
             return
         }
 
