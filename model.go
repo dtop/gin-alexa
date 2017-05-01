@@ -186,6 +186,7 @@ type AlexaReqBody struct {
     Type      string     `json:"type"`
     RequestID string     `json:"requestId"`
     Timestamp string     `json:"timestamp"`
+    Locale    string     `json:"locale,omitempty"`
     Intent    AlexaIntent `json:"intent,omitempty"`
     Reason    string     `json:"reason,omitempty"`
 }
