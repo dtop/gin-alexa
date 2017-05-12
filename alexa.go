@@ -1,11 +1,15 @@
 package gin_alexa
 
-import "github.com/gin-gonic/gin"
+import (
+    "github.com/gin-gonic/gin"
+    echoRequest "github.com/go-alexa/alexa/parser"
+    echoResponse "github.com/go-alexa/alexa/response"
+)
 
-type AlexaApplication struct {
+type EchoApplication struct {
     AppID           string
-    OnLaunch        func(*gin.Context, *AlexaRequest, *AlexaResponse)
-    OnIntent        func(*gin.Context, *AlexaRequest, *AlexaResponse)
-    OnSessionEnded  func(*gin.Context, *AlexaRequest, *AlexaResponse)
-    OnAuthCheck     func(*gin.Context, *AlexaRequest, *AlexaResponse) error
+    OnLaunch        func(*gin.Context, *echoRequest.Event, *echoResponse.Response)
+    OnIntent        func(*gin.Context, *echoRequest.Event, *echoResponse.Response)
+    OnSessionEnded  func(*gin.Context, *echoRequest.Event, *echoResponse.Response)
+    OnAuthCheck     func(*gin.Context, *echoRequest.Event, *echoResponse.Response) error
 }

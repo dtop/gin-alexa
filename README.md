@@ -1,8 +1,12 @@
 # gin-alexa
 Amazon Alexa module for gin
 
-IMPORTANT:
-most of the actual code is borrowed from [skillserver](https://github.com/mikeflynn/go-alexa) to use it with gin
+Changes:
+
+changed the actual alexa stuff from [skillserver](https://github.com/mikeflynn/go-alexa) to
+[go-alexa](https://github.com/go-alexa/alex) which is also a dependency now.
+
+Added glide as depsys
 
 Import:
 ```
@@ -23,16 +27,16 @@ func YourOnIntentFunc(c *gin.Context, req *AlexaRequest, res *AlexaResponse) {
 
 func Routes(r *gin.Engine) {
 
-    app1 := &AlexaApplication{
+    app1 := &EchoApplication{
         AppID: "<YOUR APP ID>",
         OnIntent: YourOnIntentFunc,
         OnLaunch: YourOnLaunchFunc,
         OnSessionEnded: YourOnSessionEndedFunc,
     }
 
-    alexa := r.Group("/alexa")
+    alexa := r.Group("/echo")
     {
-        alexa.GET("/App1", AlexaMiddlewareAutomatic(app1))
+        alexa.GET("/App1", EchoMiddlewareAutomatic(app1))
     }
 }
 
@@ -48,19 +52,19 @@ func MyUsualGinHandlerFunc(c *gin.Context) {
     
         // ... handle
         
-        alexaResponse := NewAlexaResponse()
+        echoResponse := response.New()
         // ... respond
         
         c.Header("Content-Type", "application/json;charset=UTF-8")
-        c.JSON(200, alexaResponse)
+        c.JSON(200, echoResponse)
     }
 }
 
 func Routes(r *gin.Engine) {
 
-    alexa := r.Group("/alexa")
+    alexa := r.Group("/echo")
     {
-        alexa.GET("/App1", AlexaMiddleware("<YOUR APP ID>"), MyUsualGinHandlerFunc)
+        alexa.GET("/App1", EchoMiddleware("<YOUR APP ID>"), MyUsualGinHandlerFunc)
     }
 }
 
