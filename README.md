@@ -19,7 +19,13 @@ Example:
 
 ```go
 
-func YourOnIntentFunc(c *gin.Context, req *AlexaRequest, res *AlexaResponse) {
+import (
+    "github.com/gin-gonic/gin"
+    echoRequest "github.com/go-alexa/alexa/parser"
+    echoResponse "github.com/go-alexa/alexa/response"
+)
+
+func YourOnIntentFunc(c *gin.Context, req *echoRequest.Event, res *echoResponse.Response) {
 
     // ... handle OnIntent
     // ... respond
