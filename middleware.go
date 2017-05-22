@@ -15,6 +15,9 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
+		app.Init(c)
+		ec := app.Context
+
 		var r *http.Request = c.Request
 		validations.AppID = app.AppID
 
@@ -34,7 +37,7 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 			return
 		}
 
-		log.Println(string(body))
+		//log.Println(string(body))
 		var data json.RawMessage
 
 		err = json.Unmarshal(body, &data)
@@ -62,11 +65,18 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 		resp := response.New()
 
 		if app.OnAuthCheck != nil {
-			if err := app.OnAuthCheck(c, ev, resp); err != nil {
+			if err := app.OnAuthCheck(ec, ev, resp); err != nil {
 
 				resp.AddLinkAccountCard()
+
+				if ev.Request.Locale == "de-DE" {
+					resp.AddSSMLSpeech("<speak>Um my mailbox nutzen zu können, musst Du die Kontoverknüpfung durchführen. Öffne dazu Deine Alexa App und folge den Anweisungen.</speak>")
+				} else {
+					resp.AddSSMLSpeech("<speak>To use my mailbox you are required to do an account link. Please open you Alexa App on your phone and follow the instructions.</speak>")
+				}
+
 				c.Header("Content-Type", "application/json;charset=UTF-8")
-				c.JSON(http.StatusUnauthorized, resp)
+				c.JSON(200, resp)
 				return
 			}
 		}
@@ -74,15 +84,15 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 		switch ev.Request.Type {
 		case "LaunchRequest":
 			if app.OnLaunch != nil {
-				app.OnLaunch(c, ev, resp)
+				app.OnLaunch(ec, ev, resp)
 			}
 		case "IntentRequest":
 			if app.OnIntent != nil {
-				app.OnIntent(c, ev, resp)
+				app.OnIntent(ec, ev, resp)
 			}
 		case "SessionEndedRequest":
 			if app.OnSessionEnded != nil {
-				app.OnSessionEnded(c, ev, resp)
+				app.OnSessionEnded(ec, ev, resp)
 			}
 		default:
 			c.AbortWithStatus(http.StatusInternalServerError)
