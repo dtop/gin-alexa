@@ -10,6 +10,9 @@ import (
 	"net/http"
 )
 
+var MiddlewareLogInput  bool = false
+var MiddlewareLogOutput bool = false
+
 // EchoMiddlewareAutomatic Acts as middleware and endpoint for your router definitions
 func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 
@@ -37,7 +40,10 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 			return
 		}
 
-		//log.Println(string(body))
+		if MiddlewareLogInput {
+			log.Println(string(body))
+		}
+
 		var data json.RawMessage
 
 		err = json.Unmarshal(body, &data)
@@ -97,6 +103,16 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 		default:
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
+		}
+
+		if MiddlewareLogOutput {
+
+			raw, err := json.Marshal(resp)
+			if err != nil {
+				log.Println(err)
+			}
+
+			log.Println(string(raw))
 		}
 
 		c.Header("Content-Type", "application/json;charset=UTF-8")
