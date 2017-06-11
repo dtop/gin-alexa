@@ -2,23 +2,25 @@ package ginalexa
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-alexa/alexa/parser"
 	"github.com/go-alexa/alexa/response"
 	"github.com/go-alexa/alexa/validations"
-	"log"
-	"net/http"
+	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-var MiddlewareLogInput  bool = false
-var MiddlewareLogOutput bool = false
+var MiddlewareLogInput bool = false
+var MiddlewareLogOutput bool = true
 
 // EchoMiddlewareAutomatic Acts as middleware and endpoint for your router definitions
 func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		app.Init(c)
+		app.Context.GinContext = c
 		ec := app.Context
 
 		var r *http.Request = c.Request
@@ -53,7 +55,7 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 			return
 		}
 
-		ev, err := parser.Parse(data)
+		req, err := parser.Parse(data)
 		if err != nil {
 			log.Println("parsing of json failed", err)
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -61,53 +63,75 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 		}
 
 		// Make sure the request is good
-		if err = validations.ValidateRequest(ev); err != nil {
+		if err = validations.ValidateRequest(req); err != nil {
 			log.Println("validation of request failed", err)
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		c.Set("echoRequest", ev)
-		resp := response.New()
+		T, err := i18n.Tfunc(req.Request.Locale, "en-US")
+		if err != nil {
+			log.Println("loading of translate failed", err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		app.Context.T = T
+
+		res := response.New()
+		c.Set("echoRequest", req)
 
 		if app.OnAuthCheck != nil {
-			if err := app.OnAuthCheck(ec, ev, resp); err != nil {
+			if err := app.OnAuthCheck(ec, req, res); err != nil {
 
-				resp.AddLinkAccountCard()
+				res.AddLinkAccountCard()
 
-				if ev.Request.Locale == "de-DE" {
-					resp.AddSSMLSpeech("<speak>Um my mailbox nutzen zu können, musst Du die Kontoverknüpfung durchführen. Öffne dazu Deine Alexa App und folge den Anweisungen.</speak>")
+				if req.Request.Locale == "de-DE" {
+					res.AddSSMLSpeech("<speak>Um my mailbox nutzen zu können, musst Du die Kontoverknüpfung durchführen. Öffne dazu Deine Alexa App und folge den Anweisungen.</speak>")
 				} else {
-					resp.AddSSMLSpeech("<speak>To use my mailbox you are required to do an account link. Please open you Alexa App on your phone and follow the instructions.</speak>")
+					res.AddSSMLSpeech("<speak>To use my mailbox you are required to do an account link. Please open you Alexa App on your phone and follow the instructions.</speak>")
 				}
 
 				c.Header("Content-Type", "application/json;charset=UTF-8")
-				c.JSON(200, resp)
+				c.JSON(200, res)
 				return
 			}
 		}
 
-		switch ev.Request.Type {
+		switch req.Request.Type {
 		case "LaunchRequest":
+
 			if app.OnLaunch != nil {
-				app.OnLaunch(ec, ev, resp)
+				app.OnLaunch(ec, req, res)
 			}
+
 		case "IntentRequest":
-			if app.OnIntent != nil {
-				app.OnIntent(ec, ev, resp)
+
+			name := req.Request.Intent.Name
+			proc, ok := app.intents[name]
+			if !ok {
+
+				c.AbortWithStatus(http.StatusInternalServerError)
+				panic("unknown event " + name)
 			}
+
+			proc(ec, req, res)
+
 		case "SessionEndedRequest":
+
 			if app.OnSessionEnded != nil {
-				app.OnSessionEnded(ec, ev, resp)
+				app.OnSessionEnded(ec, req, res)
 			}
+
 		default:
+
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
 		if MiddlewareLogOutput {
 
-			raw, err := json.Marshal(resp)
+			raw, err := json.Marshal(res)
 			if err != nil {
 				log.Println(err)
 			}
@@ -116,7 +140,7 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 		}
 
 		c.Header("Content-Type", "application/json;charset=UTF-8")
-		c.JSON(200, resp)
+		c.JSON(200, res)
 
 		c.Next()
 	}

@@ -4,45 +4,142 @@ import (
 	"github.com/gin-gonic/gin"
 	echoRequest "github.com/go-alexa/alexa/parser"
 	echoResponse "github.com/go-alexa/alexa/response"
+	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-type EchoContext struct {
-	AppID      string
-	GinContext *gin.Context
-	EchoConfig Configurable
-}
+const (
+	EventOnLaunch       = "OnLaunch"
+	EventOnIntent       = "OnIntent"
+	EventOnSessionEnded = "OnSessionEnded"
+	EventOnAuthCheck    = "OnAuthCheck"
+)
 
-// EchoApplication is the actual application you define per endpoint
-type EchoApplication struct {
-	AppID          string
-	Config		   Configurable
-	OnLaunch       func(*EchoContext, *echoRequest.Event, *echoResponse.Response)
-	OnIntent       func(*EchoContext, *echoRequest.Event, *echoResponse.Response)
-	OnSessionEnded func(*EchoContext, *echoRequest.Event, *echoResponse.Response)
-	OnAuthCheck    func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error
-	Context        *EchoContext
-}
+type (
 
-func (ea *EchoApplication) Inject() *EchoApplication {
+	// EchoMethod is a shortform for the actual callback for all methods
+	EchoMethod func(*EchoContext, *echoRequest.Event, *echoResponse.Response)
 
-	if ea.AppID == "" {
-
-		appId := ea.Config.GetString("AppID")
-		if appId == "" {
-			panic("appid is missing")
-		}
-
-		ea.AppID = appId
+	// EchoAction represents the actions which can be registered to the app
+	EchoAction interface {
+		GetType() string
+		GetName() string
+		GetCallback() EchoMethod
 	}
 
-	return ea
+	// EchoContext provides a unified set of information to each callup
+	EchoContext struct {
+		AppID      string
+		GinContext *gin.Context
+		EchoConfig Configurable
+		T          i18n.TranslateFunc
+	}
+
+	// EchoApplication is the actual application you define per endpoint
+	EchoApplication struct {
+		AppID          string
+		config         Configurable
+		OnLaunch       EchoMethod
+		OnSessionEnded EchoMethod
+		OnAuthCheck    func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error
+		Context        *EchoContext
+
+		intents map[string]EchoMethod
+	}
+
+	echoAct struct {
+		eaName     string
+		eaType     string
+		eaCallback EchoMethod
+	}
+
+	echoAuthAct struct {
+		echoAct
+
+		eaName         string
+		eaType         string
+		eaAuthCallback func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error
+	}
+)
+
+// New creates a new representation of EchoApplication
+func New(appID string, config Configurable, c *gin.Context) *EchoApplication {
+
+	_appid := appID
+	if _appid == "" {
+		_appid = config.GetString("AppID")
+	}
+
+	if _appid == "" {
+		panic("no appID given")
+		return nil
+	}
+
+	return &EchoApplication{
+		AppID:   _appid,
+		config:  config,
+		intents: make(map[string]EchoMethod),
+		Context: &EchoContext{
+			AppID:      appID,
+			GinContext: c,
+			EchoConfig: config,
+		},
+	}
 }
 
-func (ea *EchoApplication) Init(c *gin.Context) {
+// Set sets echo actions
+func (ea *EchoApplication) Set(actions ...EchoAction) {
 
-	ea.Context = &EchoContext{
-		AppID: ea.AppID,
-		GinContext: c,
-		EchoConfig: ea.Config,
+	for _, v := range actions {
+
+		switch v.GetType() {
+
+		case EventOnLaunch:
+			ea.OnLaunch = v.GetCallback()
+			break
+
+		case EventOnSessionEnded:
+			ea.OnSessionEnded = v.GetCallback()
+			break
+
+		case EventOnIntent:
+			ea.intents[v.GetName()] = v.GetCallback()
+			break
+
+		case EventOnAuthCheck:
+			eac := v.(*echoAuthAct)
+			ea.OnAuthCheck = eac.GetAuthCallback()
+		}
+	}
+}
+
+// ######################### EchoMethod
+
+// ######################### EchoAction
+
+func (ac echoAct) GetType() string         { return ac.eaType }
+func (ac echoAct) GetName() string         { return ac.eaName }
+func (ac echoAct) GetCallback() EchoMethod { return ac.eaCallback }
+
+func (ac echoAuthAct) GetAuthCallback() func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error {
+	return ac.eaAuthCallback
+}
+
+// ######################### HELPERS
+
+func MkEchoAction(theName, theType string, theCallback EchoMethod) EchoAction {
+
+	return echoAct{
+		eaName:     theName,
+		eaType:     theType,
+		eaCallback: theCallback,
+	}
+}
+
+func MkEchoAuthAction(theCallback func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error) EchoAction {
+
+	return echoAuthAct{
+		eaName:         "",
+		eaType:         EventOnAuthCheck,
+		eaAuthCallback: theCallback,
 	}
 }
