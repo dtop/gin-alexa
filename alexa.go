@@ -53,9 +53,6 @@ type (
 	}
 
 	echoAuthAct struct {
-		echoAct
-
-		eaName         string
 		eaType         string
 		eaAuthCallback func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error
 	}
@@ -95,18 +92,15 @@ func (ea *EchoApplication) Set(actions ...EchoAction) {
 
 		case EventOnLaunch:
 			ea.OnLaunch = v.GetCallback()
-			break
 
 		case EventOnSessionEnded:
 			ea.OnSessionEnded = v.GetCallback()
-			break
 
 		case EventOnIntent:
 			ea.intents[v.GetName()] = v.GetCallback()
-			break
 
 		case EventOnAuthCheck:
-			eac := v.(*echoAuthAct)
+			eac := v.(echoAuthAct)
 			ea.OnAuthCheck = eac.GetAuthCallback()
 		}
 	}
@@ -119,6 +113,10 @@ func (ea *EchoApplication) Set(actions ...EchoAction) {
 func (ac echoAct) GetType() string         { return ac.eaType }
 func (ac echoAct) GetName() string         { return ac.eaName }
 func (ac echoAct) GetCallback() EchoMethod { return ac.eaCallback }
+
+func (ac echoAuthAct) GetType() string         { return ac.eaType }
+func (ac echoAuthAct) GetName() string         { return "" }
+func (ac echoAuthAct) GetCallback() EchoMethod { return nil }
 
 func (ac echoAuthAct) GetAuthCallback() func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error {
 	return ac.eaAuthCallback
@@ -138,7 +136,6 @@ func MkEchoAction(theName, theType string, theCallback EchoMethod) EchoAction {
 func MkEchoAuthAction(theCallback func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error) EchoAction {
 
 	return echoAuthAct{
-		eaName:         "",
 		eaType:         EventOnAuthCheck,
 		eaAuthCallback: theCallback,
 	}
