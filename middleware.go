@@ -98,12 +98,24 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 			}
 		}
 
+		if app.Session != nil {
+
+			sess, err := app.Session.New(req.Session.ID)
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			app.Context.Session = sess
+		}
+
 		switch req.Request.Type {
 		case "LaunchRequest":
 
 			if app.OnLaunch != nil {
 				app.OnLaunch(ec, req, res)
 			}
+
+			app.Context.Session.Store()
 
 		case "IntentRequest":
 
@@ -116,11 +128,13 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 			}
 
 			proc(ec, req, res)
+			app.Context.Session.Store()
 
 		case "SessionEndedRequest":
 
 			if app.OnSessionEnded != nil {
 				app.OnSessionEnded(ec, req, res)
+				app.Context.Session.DeleteSession()
 			}
 
 		default:

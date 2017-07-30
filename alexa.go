@@ -32,12 +32,14 @@ type (
 		GinContext *gin.Context
 		EchoConfig Configurable
 		T          i18n.TranslateFunc
+		Session    Session
 	}
 
 	// EchoApplication is the actual application you define per endpoint
 	EchoApplication struct {
 		AppID          string
 		config         Configurable
+		Session        Session
 		OnLaunch       EchoMethod
 		OnSessionEnded EchoMethod
 		OnAuthCheck    func(*EchoContext, *echoRequest.Event, *echoResponse.Response) error
@@ -79,6 +81,7 @@ func New(appID string, config Configurable, c *gin.Context) *EchoApplication {
 			AppID:      appID,
 			GinContext: c,
 			EchoConfig: config,
+			Session:    nil,
 		},
 	}
 }
