@@ -25,20 +25,37 @@ import (
     echoResponse "github.com/go-alexa/alexa/response"
 )
 
-func YourOnIntentFunc(c *gin.Context, req *echoRequest.Event, res *echoResponse.Response) {
+func HandleIntent1(c *ginalexa.EchoContext, req *echoRequest.Event, res *echoResponse.Response) {
 
     // ... handle OnIntent
     // ... respond
 }
 
+func HandleIntent2(c *ginalexa.EchoContext, req *echoRequest.Event, res *echoResponse.Response) {
+
+    // ... handle OnIntent
+    // ... respond
+    session := c.Session
+    ginContext := c.GinContext
+}
+
 func Routes(r *gin.Engine) {
 
-    app1 := &EchoApplication{
-        AppID: "<YOUR APP ID>",
-        OnIntent: YourOnIntentFunc,
-        OnLaunch: YourOnLaunchFunc,
-        OnSessionEnded: YourOnSessionEndedFunc,
-    }
+	echoApp := ginalexa.New(
+		<YOUR APP ID>,
+		nil,
+		nil,
+	)
+
+	echoApp.Session = echo.NewAlexaSession(deps)
+
+	echoApp.Set(
+		ginalexa.MkEchoAction("", ginalexa.EventOnLaunch, endpoints.HandleSessionStart),
+		ginalexa.MkEchoAction("", ginalexa.EventOnSessionEnded, endpoints.HandleSessionEnded),
+		ginalexa.MkEchoAuthAction(endpoints.Auth),
+		ginalexa.MkEchoAction("Intent1", ginalexa.EventOnIntent, endpoints.HandleIntent1),
+		ginalexa.MkEchoAction("Intent2", ginalexa.EventOnIntent, endpoints.HandleIntent2),
+	)
 
     alexa := r.Group("/echo")
     {
