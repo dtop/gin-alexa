@@ -47,7 +47,7 @@ func Routes(r *gin.Engine) {
 		nil,
 	)
 
-	echoApp.Session = echo.NewAlexaSession(deps)
+	echoApp.Session = <your implementation of the session interface>
 
 	echoApp.Set(
 		ginalexa.MkEchoAction("", ginalexa.EventOnLaunch, endpoints.HandleSessionStart),
