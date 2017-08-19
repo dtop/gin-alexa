@@ -12,6 +12,10 @@ const (
 	EventOnIntent       = "OnIntent"
 	EventOnSessionEnded = "OnSessionEnded"
 	EventOnAuthCheck    = "OnAuthCheck"
+	AmazonCancelIntent  = "AMAZON.CancelIntent"
+	AmazonHelpIntent    = "AMAZON.HelpIntent"
+	AmazonNextIntent    = "AMAZON.NextIntent"
+	AmazonStopIntent    = "AMAZON.StopIntent"
 )
 
 type (
@@ -127,7 +131,7 @@ func (ac echoAuthAct) GetAuthCallback() func(*EchoContext, *echoRequest.Event, *
 
 // ######################### HELPERS
 
-func MkEchoAction(theName, theType string, theCallback EchoMethod) EchoAction {
+func MkCustomIntent(theName, theType string, theCallback EchoMethod) EchoAction {
 
 	return echoAct{
 		eaName:     theName,
@@ -141,5 +145,41 @@ func MkEchoAuthAction(theCallback func(*EchoContext, *echoRequest.Event, *echoRe
 	return echoAuthAct{
 		eaType:         EventOnAuthCheck,
 		eaAuthCallback: theCallback,
+	}
+}
+
+func MkCancelIntent(theCallback EchoMethod) EchoAction {
+
+	return echoAct{
+		eaName:     AmazonCancelIntent,
+		eaType:     EventOnIntent,
+		eaCallback: theCallback,
+	}
+}
+
+func MkHelpIntent(theCallback EchoMethod) EchoAction {
+
+	return echoAct{
+		eaName:     AmazonHelpIntent,
+		eaType:     EventOnIntent,
+		eaCallback: theCallback,
+	}
+}
+
+func MkNextIntent(theCallback EchoMethod) EchoAction {
+
+	return echoAct{
+		eaName:     AmazonNextIntent,
+		eaType:     EventOnIntent,
+		eaCallback: theCallback,
+	}
+}
+
+func MkStopIntent(theCallback EchoMethod) EchoAction {
+
+	return echoAct{
+		eaName:     AmazonStopIntent,
+		eaType:     EventOnIntent,
+		eaCallback: theCallback,
 	}
 }

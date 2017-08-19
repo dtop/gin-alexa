@@ -50,11 +50,14 @@ func Routes(r *gin.Engine) {
 	echoApp.Session = <your implementation of the session interface>
 
 	echoApp.Set(
-		ginalexa.MkEchoAction("", ginalexa.EventOnLaunch, endpoints.HandleSessionStart),
-		ginalexa.MkEchoAction("", ginalexa.EventOnSessionEnded, endpoints.HandleSessionEnded),
+		ginalexa.MkCustomIntent("", ginalexa.EventOnLaunch, endpoints.HandleSessionStart),
+		ginalexa.MkCustomIntent("", ginalexa.EventOnSessionEnded, endpoints.HandleSessionEnded),
 		ginalexa.MkEchoAuthAction(endpoints.Auth),
-		ginalexa.MkEchoAction("Intent1", ginalexa.EventOnIntent, endpoints.HandleIntent1),
-		ginalexa.MkEchoAction("Intent2", ginalexa.EventOnIntent, endpoints.HandleIntent2),
+		ginalexa.MkCustomIntent("Intent1", ginalexa.EventOnIntent, endpoints.HandleIntent1),
+		ginalexa.MkCustomIntent("Intent2", ginalexa.EventOnIntent, endpoints.HandleIntent2),
+		ginalexa.MkStopIntent(endpoints.HandleStop),
+		ginalexa.MkHelpIntent(endpoints.HandleHelp),
+		ginalexa.MkCancelIntent(endpoints.HandleCancel),
 	)
 
     alexa := r.Group("/echo")
