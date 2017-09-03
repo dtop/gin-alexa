@@ -20,6 +20,14 @@ const (
 
 type (
 
+	// EchoError can be used to transport dispatchable errors through your app
+	EchoError struct {
+		errorString       string
+		errorCode         int
+		responseString    string
+		responseI18nToken string
+	}
+
 	// EchoMethod is a shortform for the actual callback for all methods
 	EchoMethod func(*EchoContext, *echoRequest.Event, *echoResponse.Response)
 
@@ -182,4 +190,38 @@ func MkStopIntent(theCallback EchoMethod) EchoAction {
 		eaType:     EventOnIntent,
 		eaCallback: theCallback,
 	}
+}
+
+// ################### EchoError
+
+func NewEchoError(msg string, code int, responseMessage, i18nToken string) error {
+
+	return EchoError{
+		errorString:       msg,
+		errorCode:         code,
+		responseString:    responseMessage,
+		responseI18nToken: i18nToken,
+	}
+}
+
+func EchoErrorFromError(err error, code int, responseMessage, i18nToken string) error {
+
+	return NewEchoError(err.Error(), code, responseMessage, i18nToken)
+}
+
+func (ee EchoError) Error() string {
+
+	return ee.errorString
+}
+
+func (ee EchoError) Code() int {
+	return ee.errorCode
+}
+
+func (ee EchoError) ResponseMessage() string {
+	return ee.responseString
+}
+
+func (ee EchoError) ResponseI18nToken() string {
+	return ee.responseI18nToken
 }
