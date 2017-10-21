@@ -9,5 +9,6 @@ type (
 		Set(key string, val interface{})
 		Del(key string)
 		DeleteSession()
+		Dump()
 	}
 )

@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-alexa/alexa/parser"
 	"github.com/go-alexa/alexa/response"
@@ -14,6 +16,9 @@ import (
 
 var MiddlewareLogInput bool = false
 var MiddlewareLogOutput bool = true
+
+var AccountLinkMessageDE = ""
+var AccountLinkMessageEN = ""
 
 // EchoMiddlewareAutomatic Acts as middleware and endpoint for your router definitions
 func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
@@ -87,9 +92,9 @@ func EchoMiddlewareAutomatic(app *EchoApplication) gin.HandlerFunc {
 				res.AddLinkAccountCard()
 
 				if req.Request.Locale == "de-DE" {
-					res.AddSSMLSpeech("<speak>Um my mailbox nutzen zu können, musst Du die Kontoverknüpfung durchführen. Öffne dazu Deine Alexa App und folge den Anweisungen.</speak>")
+					res.AddSSMLSpeech(fmt.Sprintf("<speak>%v</speak>", AccountLinkMessageDE))
 				} else {
-					res.AddSSMLSpeech("<speak>To use my mailbox you are required to do an account link. Please open you Alexa App on your phone and follow the instructions.</speak>")
+					res.AddSSMLSpeech(fmt.Sprintf("<speak>%v</speak>", AccountLinkMessageEN))
 				}
 
 				c.Header("Content-Type", "application/json;charset=UTF-8")
